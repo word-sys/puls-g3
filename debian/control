@@ -1,0 +1,12 @@
+Source: puls-g3
+Section: utils
+Priority: optional
+Maintainer: word-sys <baringuzeldemir@gmail.com>
+Build-Depends: debhelper (>= 12)
+Standards-Version: 4.5.1
+Homepage: https://github.com/word-sys/puls-g3
+
+Package: puls-g3
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: A unified system monitoring and management tool for Linux on GTK3

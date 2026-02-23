@@ -1,0 +1,78 @@
+[package]
+name = "puls-g3"
+version = "0.7.1"
+edition = "2021"
+authors = ["word-sys"]
+description = "A unified system monitoring and management tool for Linux on GTK3"
+license = "GPL-3.0"
+repository = "https://github.com/word-sys/puls-g3"
+
+[[bin]]
+name = "puls-g3"
+path = "src/main.rs"
+
+[dependencies]
+sysinfo = "0.33"  
+users = "0.11"
+
+bollard = { version = "0.19", optional = true }
+
+gtk = "0.18"
+glib = "0.18"
+gio = "0.18"
+pango = "0.18"
+
+tokio = { version = "1.0", features = ["full"] }
+futures-util = "0.3"
+
+chrono = { version = "0.4", features = ["serde"] }
+clap = { version = "4.0", features = ["derive"] }
+anyhow = "1.0"
+thiserror = "1.0"
+
+dashmap = "6.0"
+parking_lot = "0.12"
+
+atty = "0.2"
+env_logger = "0.11"
+log = "0.4"
+signal-hook = "0.3"
+
+[features]
+default = ["docker"]
+docker = ["dep:bollard"]
+full = ["docker"]
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
+
+[profile.dev]
+opt-level = 0
+debug = true
+
+[package.metadata.deb]
+maintainer = "word-sys <baringuzeldemir@gmail.com>"
+copyright = "2026, word-sys"
+depends = "$auto" 
+section = "utils"
+priority = "optional"
+extended-description = """\
+PULS-G3 is a GTK3-based system monitoring tool.
+Features:
+- CPU, Memory, Disk, Network monitoring
+- GPU monitoring (NVIDIA, AMD, Intel)
+- Process management
+- Service control (systemd)
+- Docker monitoring
+- System information
+- GRUB configuration
+"""
+assets = [
+    ["target/release/puls", "usr/bin/", "755"],
+    ["puls.desktop", "usr/share/applications/", "644"],
+    ["puls_icon.svg", "usr/share/icons/hicolor/scalable/apps/puls.svg", "644"],
+]

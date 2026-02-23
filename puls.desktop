@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=PULS-G3
+Comment=Unified System Monitoring Tool on GTK3
+Exec=puls-g3
+Icon=puls-g3
+Terminal=true
+Type=Application
+Categories=System;Monitor;ConsoleOnly;
+Keywords=task;manager;monitor;system;
+StartupNotify=true
