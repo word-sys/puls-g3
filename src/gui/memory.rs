@@ -9,10 +9,8 @@ pub fn build_tab(_state: Arc<Mutex<AppState>>) -> Widget {
     let container = Box::new(Orientation::Vertical, 10);
     container.set_border_width(10);
 
-    // Box 1: RAM & Swap Gauges
     let gauges_box = Box::new(Orientation::Vertical, 10);
     
-    // RAM
     let ram_frame = Frame::new(Some(" RAM Usage "));
     let ram_box = Box::new(Orientation::Vertical, 5);
     ram_box.set_border_width(8);
@@ -26,7 +24,6 @@ pub fn build_tab(_state: Arc<Mutex<AppState>>) -> Widget {
     ram_frame.add(&ram_box);
     gauges_box.pack_start(&ram_frame, false, false, 0);
 
-    // Swap
     let swap_frame = Frame::new(Some(" Swap Usage "));
     let swap_box = Box::new(Orientation::Vertical, 5);
     swap_box.set_border_width(8);
@@ -42,7 +39,6 @@ pub fn build_tab(_state: Arc<Mutex<AppState>>) -> Widget {
 
     container.pack_start(&gauges_box, false, false, 0);
 
-    // Box 2: Details Grid
     let details_frame = Frame::new(Some(" Details "));
     let details_box = Box::new(Orientation::Vertical, 5);
     details_box.set_border_width(8);

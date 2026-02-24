@@ -9,7 +9,6 @@ pub fn build_global_stats() -> Widget {
     let container = Box::new(Orientation::Horizontal, 5);
     container.set_border_width(5);
 
-    // CPU Frame
     let cpu_frame = Frame::new(Some("CPU"));
     let cpu_box = Box::new(Orientation::Horizontal, 5);
     cpu_box.set_border_width(2);
@@ -24,7 +23,6 @@ pub fn build_global_stats() -> Widget {
     cpu_frame.add(&cpu_box);
     container.pack_start(&cpu_frame, true, true, 0);
 
-    // Memory Frame
     let mem_frame = Frame::new(Some("Memory"));
     let mem_box = Box::new(Orientation::Horizontal, 5);
     mem_box.set_border_width(2);
@@ -39,7 +37,6 @@ pub fn build_global_stats() -> Widget {
     mem_frame.add(&mem_box);
     container.pack_start(&mem_frame, true, true, 0);
 
-    // GPU Frame
     let gpu_frame = Frame::new(Some("GPU"));
     let gpu_lbl = Label::new(Some("0%"));
     gpu_lbl.set_widget_name("global_gpu_lbl");
@@ -49,7 +46,6 @@ pub fn build_global_stats() -> Widget {
     gpu_frame.add(&gpu_lbl);
     container.pack_start(&gpu_frame, true, true, 0);
 
-    // Network I/O Frame
     let net_frame = Frame::new(Some("Network I/O"));
     let net_lbl = Label::new(Some("▼0 B/s ▲0 B/s"));
     net_lbl.set_widget_name("global_net_lbl");
@@ -59,7 +55,6 @@ pub fn build_global_stats() -> Widget {
     net_frame.add(&net_lbl);
     container.pack_start(&net_frame, true, true, 0);
 
-    // Disk I/O Frame
     let disk_frame = Frame::new(Some("Disk I/O"));
     let disk_lbl = Label::new(Some("R:0 B/s W:0 B/s"));
     disk_lbl.set_widget_name("global_disk_lbl");

@@ -138,13 +138,13 @@ async fn data_collection_loop(
         
         {
             let mut state = app_state.lock();
-            // Preserve the user-selected process detail across data refreshes
             let preserved_detail = state.dynamic_data.detailed_process.take();
+            let gen = state.dynamic_data.generation + 1;
             state.dynamic_data = new_data;
             state.dynamic_data.detailed_process = preserved_detail;
+            state.dynamic_data.generation = gen;
         }
 
-        // Refresh logs, services, and config periodically (every 10 cycles)
         cycle_count += 1;
         if cycle_count % 10 == 0 {
             let sys_mgr = system_service::SystemManager::new();

@@ -7,7 +7,6 @@ use crate::types::AppState;
 pub fn build_tab(_state: Arc<Mutex<AppState>>) -> Widget {
     let container = Box::new(Orientation::Vertical, 5);
     
-    // Add a search/filter bar
     let search = SearchEntry::new();
     search.set_margin_start(10);
     search.set_margin_end(10);
@@ -68,8 +67,6 @@ pub fn update_tab(tab: &Widget, state: &Arc<Mutex<AppState>>) {
     };
     
     let s = state.lock();
-    // In a real app we'd map the SearchEntry to the filtering logic or fetch new logs.
-    // For now, we update the liststore.
     store.clear();
     
     for log in &s.logs {

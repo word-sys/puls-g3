@@ -34,9 +34,6 @@ pub fn update_tab(tab: &Widget, state: &Arc<Mutex<AppState>>) {
     };
 
     let s = state.lock();
-
-    // Remove children except the label (if exists) or just rebuild if gpus changed
-    // For simplicity, we just clear and rebuild if GPUs exist to match the latest data.
     
     if let Ok(gpus) = &s.dynamic_data.gpus {
         if !gpus.is_empty() {
@@ -47,7 +44,6 @@ pub fn update_tab(tab: &Widget, state: &Arc<Mutex<AppState>>) {
                 let vbox = Box::new(Orientation::Vertical, 5);
                 vbox.set_border_width(5);
 
-                // Utilization
                 let util_lbl = Label::new(Some(&format!("Utilization: {}%", gpu.utilization)));
                 util_lbl.set_halign(gtk::Align::Start);
                 util_lbl.style_context().add_class("text-green");
@@ -56,7 +52,6 @@ pub fn update_tab(tab: &Widget, state: &Arc<Mutex<AppState>>) {
                 vbox.pack_start(&util_lbl, false, false, 0);
                 vbox.pack_start(&util_bar, false, false, 0);
 
-                // Memory
                 let mem_percent = if gpu.memory_total > 0 { (gpu.memory_used as f64 / gpu.memory_total as f64) * 100.0 } else { 0.0 };
                 let mem_lbl = Label::new(Some(&format!("Memory Usage: {:.1}%", mem_percent)));
                 mem_lbl.set_halign(gtk::Align::Start);
@@ -66,7 +61,6 @@ pub fn update_tab(tab: &Widget, state: &Arc<Mutex<AppState>>) {
                 vbox.pack_start(&mem_lbl, false, false, 0);
                 vbox.pack_start(&mem_bar, false, false, 0);
 
-                // Details Text
                 let details = format!(
                     "Memory: {} / {}\nPower: {:.2} W\nGraphics Clock: {}\nMemory Clock: {}\nMemory Temp: {}\nFan Speed: {}\nPCIe: {}",
                     format_size(gpu.memory_used), format_size(gpu.memory_total),

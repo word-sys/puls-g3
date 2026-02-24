@@ -7,7 +7,7 @@ use crate::language::Language;
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 #[command(name = "puls")]
-#[command(about = "A unified system monitoring and management tool for Linux")]
+#[command(about = "A unified system monitoring and management tool for Linux on GTK3")]
 pub struct Cli {
     #[arg(short, long, default_value_t = false)]
     pub safe: bool,
@@ -65,7 +65,7 @@ impl From<Cli> for AppConfig {
 
 impl AppConfig {
     pub fn ui_refresh_rate_ms(&self) -> u64 {
-        self.refresh_rate_ms.max(500) // Match data refresh, minimum 500ms
+        self.refresh_rate_ms.max(500) 
     }
     
     pub fn data_refresh_rate_ms(&self) -> u64 {

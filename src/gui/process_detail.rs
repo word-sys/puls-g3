@@ -11,7 +11,6 @@ pub fn build_tab(_state: Arc<Mutex<AppState>>) -> Widget {
     container.set_vexpand(true);
     container.set_hexpand(true);
 
-    // Left side: Process Information
     let info_frame = Frame::new(Some(" Process Information "));
     let info_box = Box::new(Orientation::Vertical, 0);
     info_box.set_border_width(8);
@@ -27,7 +26,6 @@ pub fn build_tab(_state: Arc<Mutex<AppState>>) -> Widget {
     info_frame.add(&info_box);
     container.pack_start(&info_frame, true, true, 0);
 
-    // Right side: Command & Environment
     let cmd_frame = Frame::new(Some(" Command & Environment "));
     let cmd_scroll = gtk::ScrolledWindow::new(gtk::Adjustment::NONE, gtk::Adjustment::NONE);
     cmd_scroll.set_vexpand(true);

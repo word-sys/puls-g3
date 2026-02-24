@@ -72,7 +72,7 @@ Features:
 - GRUB configuration
 """
 assets = [
-    ["target/release/puls", "usr/bin/", "755"],
-    ["puls.desktop", "usr/share/applications/", "644"],
-    ["puls_icon.svg", "usr/share/icons/hicolor/scalable/apps/puls.svg", "644"],
+    ["target/release/puls-g3", "usr/bin/", "755"],
+    ["puls-g3.desktop", "usr/share/applications/", "644"],
+    ["puls-g3.svg", "usr/share/icons/hicolor/scalable/apps/puls-g3.svg", "644"],
 ]

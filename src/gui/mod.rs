@@ -27,7 +27,6 @@ pub mod gpu;
 pub mod sensors;
 pub mod process_detail;
 
-/// Read detailed process info from /proc/{pid}
 fn read_proc_details(pid: &str, proc_info: &crate::types::ProcessInfo) -> crate::types::DetailedProcessInfo {
     let proc_dir = format!("/proc/{}", pid);
 
@@ -118,7 +117,6 @@ fn read_proc_details(pid: &str, proc_info: &crate::types::ProcessInfo) -> crate:
 }
 
 pub fn build_ui(app: &Application, state: Arc<Mutex<AppState>>, config: AppConfig) {
-    // Load custom CSS
     style::apply_styles();
 
     let window = ApplicationWindow::builder()
@@ -132,7 +130,6 @@ pub fn build_ui(app: &Application, state: Arc<Mutex<AppState>>, config: AppConfi
     header.set_title(Some("PULS"));
     header.set_subtitle(Some("System Monitor & Admin Tool"));
 
-    // Pause/Resume toggle button
     let paused = Rc::new(Cell::new(false));
     let pause_btn = gtk::ToggleButton::with_label("⏸ Pause");
     pause_btn.style_context().add_class("suggested-action");
@@ -147,77 +144,50 @@ pub fn build_ui(app: &Application, state: Arc<Mutex<AppState>>, config: AppConfi
     });
     header.pack_end(&pause_btn);
     window.set_titlebar(Some(&header));
-
     let vbox = GtkBox::new(Orientation::Vertical, 0);
-    // ----------------------------------------------------------------
-    // Setup tabs
-    // ----------------------------------------------------------------
-    
-    // 1. Stack Switcher (Tabs)
     let switcher = gtk::StackSwitcher::new();
     switcher.set_halign(gtk::Align::Center);
     vbox.pack_start(&switcher, false, false, 5);
-
-    // 2. Global Stats Frame
     let global_stats_widget = global_stats::build_global_stats();
     vbox.pack_start(&global_stats_widget, false, false, 5);
-
-    // 3. Stack (Content)
     let stack = gtk::Stack::new();
     stack.set_transition_type(gtk::StackTransitionType::Crossfade);
-
     let dashboard_tab = dashboard::build_tab(state.clone());
     stack.add_titled(&dashboard_tab, "dashboard", "1:Dashboard");
-    
     let processes_tab = processes::build_tab(state.clone());
     stack.add_titled(&processes_tab, "processes", "2:Processes");
-
     let cpu_tab = cpu::build_tab(state.clone());
     stack.add_titled(&cpu_tab, "cpu", "3:CPU");
-
     let memory_tab = memory::build_tab(state.clone());
     stack.add_titled(&memory_tab, "memory", "4:Memory");
-
     let disks_tab = disks::build_tab(state.clone());
     stack.add_titled(&disks_tab, "disks", "5:Disks");
-    
     let network_tab = network::build_tab(state.clone());
     stack.add_titled(&network_tab, "network", "6:Network");
-
     let gpu_tab = gpu::build_tab(state.clone());
     stack.add_titled(&gpu_tab, "gpu", "7:GPU");
-    
     let system_tab = system::build_tab(state.clone());
     stack.add_titled(&system_tab, "system", "8:System");
-
     let services_tab = services::build_tab(state.clone());
     stack.add_titled(&services_tab, "services", "9:Services");
-    
     let logs_tab = logs::build_tab(state.clone());
     stack.add_titled(&logs_tab, "logs", "0:Logs");
-    
     let config_tab = config::build_tab(state.clone());
     stack.add_titled(&config_tab, "config", "-:Config");
-
     let containers_tab = containers::build_tab(state.clone());
     stack.add_titled(&containers_tab, "containers", "=:Docker");
-    
     let sensors_tab = sensors::build_tab(state.clone());
     stack.add_titled(&sensors_tab, "sensors", "+:Sensors");
-
     let process_detail_tab = process_detail::build_tab(state.clone());
     stack.add_titled(&process_detail_tab, "process_detail", "P:Details");
-
     switcher.set_stack(Some(&stack));
 
-    // Global Keyboard Shortcuts
     let stack_clone = stack.clone();
     window.connect_key_press_event(move |_, key| {
         use gdk::keys::constants as keys;
         let pval = key.keyval();
         
         if pval == keys::Tab {
-            // Cycle forward
             let children = stack_clone.children();
             if let Some(current) = stack_clone.visible_child() {
                 if let Some(pos) = children.iter().position(|w| w == &current) {
@@ -256,7 +226,6 @@ pub fn build_ui(app: &Application, state: Arc<Mutex<AppState>>, config: AppConfi
 
     vbox.pack_start(&stack, true, true, 0);
 
-    // Wire up process selection from Dashboard TreeView
     {
         let state_sel = state.clone();
         let stack_sel = stack.clone();
@@ -281,7 +250,6 @@ pub fn build_ui(app: &Application, state: Arc<Mutex<AppState>>, config: AppConfi
         }
     }
 
-    // Wire up process selection from Processes tab TreeView
     {
         let state_sel = state.clone();
         let stack_sel = stack.clone();
@@ -308,25 +276,16 @@ pub fn build_ui(app: &Application, state: Arc<Mutex<AppState>>, config: AppConfi
 
     window.add(&vbox);
     window.show_all();
-
-    // ----------------------------------------------------------------
-    // Periodic UI Refresh
-    // ----------------------------------------------------------------
     let global_stats_widget_clone = global_stats_widget.clone();
 
     let refresh_ms = config.ui_refresh_rate_ms() as u32;
     let paused_ref = paused.clone();
     let stack_ref = stack.clone();
     glib::timeout_add_local(Duration::from_millis(refresh_ms as u64), move || {
-        // Skip updates when paused
         if paused_ref.get() {
             return ControlFlow::Continue;
         }
-
-        // Always update global stats bar
         global_stats::update_global_stats(&global_stats_widget_clone, &state);
-
-        // Only update the currently visible tab to save CPU
         let visible = stack_ref.visible_child_name().unwrap_or_default();
         match visible.as_str() {
             "dashboard" => dashboard::update_tab(&dashboard_tab, &state),

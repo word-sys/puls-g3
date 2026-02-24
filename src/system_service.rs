@@ -120,7 +120,6 @@ impl SystemManager {
         services
     }
 
-    /// Run a systemctl command, using pkexec for privilege escalation if not root
     fn run_systemctl(&self, action: &str, service_name: &str) -> Result<(), String> {
         let svc = format!("{}.service", service_name);
         let output = if self.has_sudo {

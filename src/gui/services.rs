@@ -14,7 +14,6 @@ pub fn build_tab(_state: Arc<Mutex<AppState>>) -> Widget {
     let inner = Box::new(Orientation::Vertical, 5);
     inner.set_border_width(5);
 
-    // Action buttons row
     let action_box = Box::new(Orientation::Horizontal, 5);
 
     let start_btn = Button::with_label("▶ Start");
@@ -33,14 +32,12 @@ pub fn build_tab(_state: Arc<Mutex<AppState>>) -> Widget {
     action_box.pack_start(&disable_btn, false, false, 0);
     inner.pack_start(&action_box, false, false, 0);
 
-    // Status label for action feedback
     let status_lbl = gtk::Label::new(Some("Select a service and use the buttons above."));
     status_lbl.set_widget_name("service_status_lbl");
     status_lbl.set_halign(gtk::Align::Start);
     status_lbl.style_context().add_class("text-cyan");
     inner.pack_start(&status_lbl, false, false, 0);
 
-    // TreeView with all columns
     let scrolled = ScrolledWindow::new(gtk::Adjustment::NONE, gtk::Adjustment::NONE);
     scrolled.set_vexpand(true);
     scrolled.set_hexpand(true);
@@ -70,14 +67,12 @@ pub fn build_tab(_state: Arc<Mutex<AppState>>) -> Widget {
     frame.add(&inner);
     container.pack_start(&frame, true, true, 0);
 
-    // Helper to get selected service name
     fn get_selected_service(tree: &TreeView) -> Option<String> {
         tree.selection().selected().and_then(|(model, iter)| {
             model.value(&iter, 0).get::<String>().ok()
         })
     }
 
-    // Connect buttons
     let tree_ref = tree.clone();
     let status_ref = status_lbl.clone();
     start_btn.connect_clicked(clone!(@strong tree_ref, @strong status_ref => move |_| {

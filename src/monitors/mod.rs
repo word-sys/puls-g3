@@ -164,6 +164,7 @@ impl DataCollector {
             sensors,
             last_update: std::time::Instant::now(),
             docker_error,
+            generation: 0,
         }
     }
     

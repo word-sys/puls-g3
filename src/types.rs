@@ -1,6 +1,6 @@
 use std::collections::VecDeque;
 use sysinfo::Pid;
-// No ratatui imports
+
 #[derive(Clone, Default, Debug)]
 pub struct NetworkStats {
     pub rx: u64,
@@ -221,6 +221,7 @@ pub struct DynamicData {
     pub sensors: Vec<SensorInfo>,
     pub last_update: std::time::Instant,
     pub docker_error: Option<String>,
+    pub generation: u64,
 }
 
 impl Default for DynamicData {
@@ -242,6 +243,7 @@ impl Default for DynamicData {
             sensors: Vec::new(),
             last_update: std::time::Instant::now(),
             docker_error: None,
+            generation: 0,
         }
     }
 }

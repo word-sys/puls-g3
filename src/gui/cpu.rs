@@ -13,7 +13,6 @@ pub fn build_tab(_state: Arc<Mutex<AppState>>) -> Widget {
     let container = Box::new(Orientation::Vertical, 10);
     container.set_border_width(10);
 
-    // Box 1: CPU Information Frame
     let info_frame = Frame::new(Some(" CPU Information "));
     let info_box = Box::new(Orientation::Vertical, 5);
     info_box.set_border_width(8);
@@ -25,7 +24,6 @@ pub fn build_tab(_state: Arc<Mutex<AppState>>) -> Widget {
     info_frame.add(&info_box);
     container.pack_start(&info_frame, false, false, 0);
 
-    // Box 2: Detailed Core Usage Grid
     let grid_frame = Frame::new(Some(" Detailed Core Usage "));
     let grid_box = Box::new(Orientation::Vertical, 5);
     grid_box.set_border_width(8);

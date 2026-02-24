@@ -10,7 +10,6 @@ pub fn build_tab(_state: Arc<Mutex<AppState>>) -> Widget {
     let container = Box::new(Orientation::Vertical, 4);
     container.set_border_width(6);
 
-    // ── System Overview Status ──
     let status_frame = Frame::new(Some(" System Overview "));
     let status_lbl = Label::new(Some("Loading…"));
     status_lbl.set_widget_name("dashboard_status_lbl");
@@ -23,7 +22,6 @@ pub fn build_tab(_state: Arc<Mutex<AppState>>) -> Widget {
     status_frame.add(&status_lbl);
     container.pack_start(&status_frame, false, false, 0);
 
-    // ── Processes table ──
     let proc_frame = Frame::new(Some(" Processes "));
     let proc_scroll = ScrolledWindow::new(gtk::Adjustment::NONE, gtk::Adjustment::NONE);
     proc_scroll.set_vexpand(true);
@@ -54,7 +52,6 @@ pub fn build_tab(_state: Arc<Mutex<AppState>>) -> Widget {
     proc_frame.add(&proc_scroll);
     container.pack_start(&proc_frame, true, true, 0);
 
-    // ── Containers preview ──
     let dock_frame = Frame::new(Some(" Containers "));
     let dock_lbl = Label::new(Some("No containers running"));
     dock_lbl.set_widget_name("dashboard_dock_lbl");
@@ -70,7 +67,6 @@ pub fn build_tab(_state: Arc<Mutex<AppState>>) -> Widget {
     container.upcast::<Widget>()
 }
 
-// ── Recursive widget search (used by many tabs) ──
 pub fn find_widget_by_name(container: &gtk::Container, name: &str) -> Option<Widget> {
     for child in container.children() {
         if child.widget_name() == name {
@@ -94,7 +90,6 @@ pub fn update_tab(tab: &Widget, state: &Arc<Mutex<AppState>>) {
     let s = state.lock();
     let usage = &s.dynamic_data.global_usage;
 
-    // ── Status line ──
     if let Some(lbl) = find_widget_by_name(&container, "dashboard_status_lbl")
         .and_then(|w| w.downcast::<Label>().ok())
     {
@@ -114,7 +109,6 @@ pub fn update_tab(tab: &Widget, state: &Arc<Mutex<AppState>>) {
         ));
     }
 
-    // ── Process table ──
     if let Some(tree) = find_widget_by_name(&container, "dashboard_proc_tree")
         .and_then(|w| w.downcast::<TreeView>().ok())
     {
@@ -130,7 +124,6 @@ pub fn update_tab(tab: &Widget, state: &Arc<Mutex<AppState>>) {
         }
     }
 
-    // ── Containers label ──
     if let Some(lbl) = find_widget_by_name(&container, "dashboard_dock_lbl")
         .and_then(|w| w.downcast::<Label>().ok())
     {
