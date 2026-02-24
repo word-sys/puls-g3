@@ -6,6 +6,8 @@
 
 PULS-G3 is the GTK3 graphical edition of PULS. It combines resource monitoring with system administration capabilities, allowing control over system services, boot configurations, and logs directly from a modern desktop interface — everything in one place.
 
+![PULS Screenshot](https://raw.githubusercontent.com/word-sys/puls-g3/main/screenshots/screenshot.png)
+
 ## Architecture
 
 PULS-G3 is built with Rust, using GTK3 for the interface and leverages native Linux APIs and binaries for system interaction:
