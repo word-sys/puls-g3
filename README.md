@@ -84,12 +84,6 @@ PULS-G3 provides control over `systemd` units with `pkexec` privilege escalation
     ```
     The `.deb` file will be created in `target/debian/`.
 
-3.  **Install**:
-    ```bash
-    sudo dpkg -i target/debian/puls-g3_*.deb
-    sudo apt install -f  # resolve dependencies
-    ```
-
 ### Release Binary
 ```bash
 bash build-release.sh
