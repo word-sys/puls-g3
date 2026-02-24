@@ -5,128 +5,193 @@ use gtk::gdk::Screen;
 pub fn apply_styles() {
     let provider = CssProvider::new();
     let css = r#"
-        /* Base Application Styles */
+        /* Base Application Styles - Dark Terminal Theme */
         window {
-            background-color: #0c0c0c; /* Black background matching TUI */
-            color: #d0d0d0;
-            font-family: 'Monospace', 'Courier New', monospace;
-            font-size: 11px;
+            background-color: #0d0d0d;
+            color: #e0e0e0;
+            font-family: 'JetBrains Mono', 'Fira Code', 'Monospace', monospace;
+            font-size: 13px;
         }
 
-        /* Container frames to look like TUI boxes */
+        /* Container frames */
         frame {
             padding: 0;
         }
 
         frame > border {
-            border: 1px solid #c0c0c0;
+            border: 1px solid #333333;
             border-radius: 4px;
         }
 
-        /* Labels inside frames acting as titles */
-        frame label.frame-title {
-            color: #c0c0c0;
+        /* Frame titles */
+        frame label {
+            color: #cccccc;
             font-weight: bold;
-            padding: 0 4px;
+            padding: 0 6px;
         }
 
-        /* Notebook (Tabs) Styling */
-        notebook {
-            background-color: #0c0c0c;
-        }
-        
-        notebook > header {
-            background-color: #0c0c0c;
-            border-bottom: 1px solid #c0c0c0;
-            padding: 0;
-        }
-        
-        notebook > header > tabs > tab {
-            background-color: transparent;
-            color: #c0c0c0;
-            padding: 2px 8px;
+        /* Stack Switcher (Tabs) */
+        stackswitcher button {
+            background-color: #111111;
+            color: #999999;
+            border: 1px solid #2a2a2a;
+            border-radius: 4px;
+            padding: 4px 10px;
             font-size: 12px;
             font-weight: normal;
-            border: none;
-            border-radius: 0;
-        }
-        
-        notebook > header > tabs > tab:checked {
-            color: #ffffff;
-            font-weight: bold;
-            background-color: #1a1a1a;
+            min-height: 24px;
         }
 
-        notebook > header > tabs > tab:hover {
+        stackswitcher button:checked {
+            background-color: #1a1a1a;
+            color: #00ffff;
+            font-weight: bold;
+            border-color: #00ffff;
+        }
+
+        stackswitcher button:hover {
+            background-color: #1a1a1a;
             color: #ffffff;
-            background-color: #222222;
+        }
+
+        /* HeaderBar */
+        headerbar {
+            background-color: #080808;
+            border-bottom: 1px solid #333333;
+            color: #e0e0e0;
+        }
+
+        headerbar .title {
+            color: #00ffff;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        headerbar .subtitle {
+            color: #888888;
+            font-size: 12px;
         }
 
         /* TreeView Styling */
         treeview {
-            background-color: #0c0c0c;
-            color: #d0d0d0;
-            font-size: 11px;
+            background-color: #111111;
+            color: #e0e0e0;
+            font-size: 13px;
             font-family: inherit;
         }
 
         treeview:hover {
             background-color: #1a1a1a;
         }
-        
+
         treeview:selected {
-            background-color: #262626;
-            color: #00ffff; /* Cyan selection */
+            background-color: #1a2a3a;
+            color: #00ffff;
         }
 
         treeview header button {
-            background-color: #0c0c0c;
-            color: #00ff00; /* Green headers typical for TUI columns */
-            font-weight: normal;
-            padding: 2px 4px;
+            background-color: #0a0a0a;
+            color: #00ff88;
+            font-weight: bold;
+            padding: 4px 8px;
             border: none;
-            border-bottom: 1px solid #555555;
+            border-bottom: 2px solid #00ff88;
             font-family: inherit;
+            font-size: 13px;
         }
 
         /* Progress Bar Styling */
         progressbar {
-            min-height: 14px;
-            border-radius: 0;
+            min-height: 16px;
+            border-radius: 3px;
         }
-        
+
         progressbar trough {
-            background-color: #222222;
-            border-radius: 0;
+            background-color: #1a1a1a;
+            border-radius: 3px;
+            border: 1px solid #333333;
         }
-        
+
         progressbar progress {
-            background-color: #00ff00; /* Neon Green */
-            border-radius: 0;
+            background-color: #00ff88;
+            border-radius: 3px;
             background-image: none;
         }
 
-        /* Specific Colors matching TUI */
-        .text-green { color: #00ff00; }
-        .text-cyan { color: #00ffff; }
-        .text-magenta { color: #ff00ff; }
-        .text-orange { color: #ffaa00; }
-        .text-white { color: #ffffff; }
+        /* Color utility classes */
+        .text-green { color: #00ff88; font-weight: bold; }
+        .text-cyan { color: #00ffff; font-weight: bold; }
+        .text-magenta { color: #ff66ff; font-weight: bold; }
+        .text-orange { color: #ffaa44; font-weight: bold; }
+        .text-white { color: #ffffff; font-weight: bold; }
+        .text-red { color: #ff4444; font-weight: bold; }
 
         label {
             font-family: inherit;
+            font-size: 13px;
+            color: #e0e0e0;
         }
-        
-        /* Grid Borders and Separators */
+
+        /* Separators */
         separator {
-            background-color: #555555;
+            background-color: #333333;
+            min-height: 1px;
         }
-        
+
         entry {
             background-color: #111111;
             color: #00ffff;
-            border: 1px solid #555555;
-            border-radius: 0;
+            border: 1px solid #333333;
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 13px;
+        }
+
+        entry:focus {
+            border-color: #00ffff;
+        }
+
+        /* Buttons */
+        button {
+            background-color: #151515;
+            color: #e0e0e0;
+            border: 1px solid #333333;
+            border-radius: 4px;
+            padding: 4px 12px;
+            font-size: 13px;
+        }
+
+        button:hover {
+            background-color: #1a1a1a;
+            color: #ffffff;
+        }
+
+        button.suggested-action {
+            background-color: #0a2a1a;
+            color: #00ff88;
+            border-color: #00ff88;
+        }
+
+        button.destructive-action {
+            background-color: #2a0a0a;
+            color: #ff4444;
+            border-color: #ff4444;
+        }
+
+        /* ScrolledWindow / Scrollbar */
+        scrolledwindow {
+            background-color: transparent;
+        }
+
+        scrollbar slider {
+            background-color: #333333;
+            border-radius: 4px;
+            min-width: 8px;
+            min-height: 8px;
+        }
+
+        scrollbar slider:hover {
+            background-color: #555555;
         }
     "#;
 

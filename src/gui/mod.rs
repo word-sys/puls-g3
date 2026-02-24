@@ -316,27 +316,35 @@ pub fn build_ui(app: &Application, state: Arc<Mutex<AppState>>, config: AppConfi
 
     let refresh_ms = config.ui_refresh_rate_ms() as u32;
     let paused_ref = paused.clone();
+    let stack_ref = stack.clone();
     glib::timeout_add_local(Duration::from_millis(refresh_ms as u64), move || {
         // Skip updates when paused
         if paused_ref.get() {
             return ControlFlow::Continue;
         }
-        // Here we trigger updates to internal UI tabs by reading the `state`
-        dashboard::update_tab(&dashboard_tab, &state);
-        processes::update_tab(&processes_tab, &state);
-        cpu::update_tab(&cpu_tab, &state);
-        memory::update_tab(&memory_tab, &state);
-        disks::update_tab(&disks_tab, &state);
-        network::update_tab(&network_tab, &state);
-        gpu::update_tab(&gpu_tab, &state);
-        system::update_tab(&system_tab, &state);
-        services::update_tab(&services_tab, &state);
-        logs::update_tab(&logs_tab, &state);
-        config::update_tab(&config_tab, &state);
-        containers::update_tab(&containers_tab, &state);
-        sensors::update_tab(&sensors_tab, &state);
-        process_detail::update_tab(&process_detail_tab, &state);
+
+        // Always update global stats bar
         global_stats::update_global_stats(&global_stats_widget_clone, &state);
+
+        // Only update the currently visible tab to save CPU
+        let visible = stack_ref.visible_child_name().unwrap_or_default();
+        match visible.as_str() {
+            "dashboard" => dashboard::update_tab(&dashboard_tab, &state),
+            "processes" => processes::update_tab(&processes_tab, &state),
+            "cpu" => cpu::update_tab(&cpu_tab, &state),
+            "memory" => memory::update_tab(&memory_tab, &state),
+            "disks" => disks::update_tab(&disks_tab, &state),
+            "network" => network::update_tab(&network_tab, &state),
+            "gpu" => gpu::update_tab(&gpu_tab, &state),
+            "system" => system::update_tab(&system_tab, &state),
+            "services" => services::update_tab(&services_tab, &state),
+            "logs" => logs::update_tab(&logs_tab, &state),
+            "config" => config::update_tab(&config_tab, &state),
+            "containers" => containers::update_tab(&containers_tab, &state),
+            "sensors" => sensors::update_tab(&sensors_tab, &state),
+            "process_detail" => process_detail::update_tab(&process_detail_tab, &state),
+            _ => {},
+        }
 
         ControlFlow::Continue
     });
