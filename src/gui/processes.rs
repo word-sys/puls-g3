@@ -31,6 +31,8 @@ pub fn build_tab(_state: Arc<Mutex<AppState>>) -> Widget {
         glib::Type::STRING, // CPU
         glib::Type::STRING, // RAM
         glib::Type::STRING, // User
+        glib::Type::STRING, // Disk Read
+        glib::Type::STRING, // Disk Write
     ]);
 
     let tree = TreeView::with_model(&store);
@@ -42,6 +44,8 @@ pub fn build_tab(_state: Arc<Mutex<AppState>>) -> Widget {
         ("CPU", 2),
         ("RAM", 3),
         ("User", 4),
+        ("Disk Read", 5),
+        ("Disk Write", 6),
     ];
     
     for (title, col_id) in cols.iter() {
@@ -89,6 +93,6 @@ pub fn update_tab(tab: &Widget, state: &Arc<Mutex<AppState>>) {
     store.clear();
     
     for proc in &s.dynamic_data.processes {
-        store.insert_with_values(None, &[(0, &proc.pid), (1, &proc.name), (2, &proc.cpu_display), (3, &proc.mem_display), (4, &proc.user)]);
+        store.insert_with_values(None, &[(0, &proc.pid), (1, &proc.name), (2, &proc.cpu_display), (3, &proc.mem_display), (4, &proc.user), (5, &proc.disk_read), (6, &proc.disk_write)]);
     }
 }

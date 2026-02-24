@@ -92,7 +92,8 @@ pub fn update_global_stats(container: &Widget, state: &Arc<Mutex<AppState>>) {
     let usage = &s.dynamic_data.global_usage;
 
     if let Some(lbl) = cpu_lbl {
-        lbl.set_text(&format!("{:.1}% | {:.1}°C | Load: {:.1}", usage.cpu, 0.0, usage.load_average.0));
+        let cpu_temp = s.dynamic_data.temperatures.cpu_temp.unwrap_or(0.0);
+        lbl.set_text(&format!("{:.1}% | {:.0}°C | Load: {:.1}", usage.cpu, cpu_temp, usage.load_average.0));
     }
     if let Some(bar) = cpu_bar {
         bar.set_fraction((usage.cpu / 100.0).clamp(0.0, 1.0) as f64);

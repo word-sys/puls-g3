@@ -120,89 +120,44 @@ impl SystemManager {
         services
     }
 
-    pub fn start_service(&self, service_name: &str) -> Result<(), String> {
-        if !self.has_sudo {
-            return Err("Insufficient privileges (root required)".to_string());
-        }
-
-        let output = Command::new("systemctl")
-            .args(&["start", &format!("{}.service", service_name)])
-            .output()
-            .map_err(|e| e.to_string())?;
-
-        if output.status.success() {
-            Ok(())
+    /// Run a systemctl command, using pkexec for privilege escalation if not root
+    fn run_systemctl(&self, action: &str, service_name: &str) -> Result<(), String> {
+        let svc = format!("{}.service", service_name);
+        let output = if self.has_sudo {
+            Command::new("systemctl")
+                .args(&[action, &svc])
+                .output()
         } else {
-            Err(String::from_utf8_lossy(&output.stderr).to_string())
+            Command::new("pkexec")
+                .args(&["systemctl", action, &svc])
+                .output()
+        };
+
+        match output {
+            Ok(out) if out.status.success() => Ok(()),
+            Ok(out) => Err(String::from_utf8_lossy(&out.stderr).to_string()),
+            Err(e) => Err(e.to_string()),
         }
+    }
+
+    pub fn start_service(&self, service_name: &str) -> Result<(), String> {
+        self.run_systemctl("start", service_name)
     }
 
     pub fn stop_service(&self, service_name: &str) -> Result<(), String> {
-        if !self.has_sudo {
-            return Err("Insufficient privileges (root required)".to_string());
-        }
-
-        let output = Command::new("systemctl")
-            .args(&["stop", &format!("{}.service", service_name)])
-            .output()
-            .map_err(|e| e.to_string())?;
-
-        if output.status.success() {
-            Ok(())
-        } else {
-            Err(String::from_utf8_lossy(&output.stderr).to_string())
-        }
+        self.run_systemctl("stop", service_name)
     }
 
     pub fn restart_service(&self, service_name: &str) -> Result<(), String> {
-        if !self.has_sudo {
-            return Err("Insufficient privileges (root required)".to_string());
-        }
-
-        let output = Command::new("systemctl")
-            .args(&["restart", &format!("{}.service", service_name)])
-            .output()
-            .map_err(|e| e.to_string())?;
-
-        if output.status.success() {
-            Ok(())
-        } else {
-            Err(String::from_utf8_lossy(&output.stderr).to_string())
-        }
+        self.run_systemctl("restart", service_name)
     }
 
     pub fn enable_service(&self, service_name: &str) -> Result<(), String> {
-        if !self.has_sudo {
-            return Err("Insufficient privileges (root required)".to_string());
-        }
-
-        let output = Command::new("systemctl")
-            .args(&["enable", &format!("{}.service", service_name)])
-            .output()
-            .map_err(|e| e.to_string())?;
-
-        if output.status.success() {
-            Ok(())
-        } else {
-            Err(String::from_utf8_lossy(&output.stderr).to_string())
-        }
+        self.run_systemctl("enable", service_name)
     }
 
     pub fn disable_service(&self, service_name: &str) -> Result<(), String> {
-        if !self.has_sudo {
-            return Err("Insufficient privileges (root required)".to_string());
-        }
-
-        let output = Command::new("systemctl")
-            .args(&["disable", &format!("{}.service", service_name)])
-            .output()
-            .map_err(|e| e.to_string())?;
-
-        if output.status.success() {
-            Ok(())
-        } else {
-            Err(String::from_utf8_lossy(&output.stderr).to_string())
-        }
+        self.run_systemctl("disable", service_name)
     }
 
     pub fn get_service_status(&self, service_name: &str) -> String {

@@ -5,6 +5,8 @@ use std::sync::Arc;
 use parking_lot::Mutex;
 use glib::ControlFlow;
 use std::time::Duration;
+use std::cell::Cell;
+use std::rc::Rc;
 
 use crate::types::{AppState, AppConfig};
 
@@ -23,6 +25,97 @@ pub mod cpu;
 pub mod memory;
 pub mod gpu;
 pub mod sensors;
+pub mod process_detail;
+
+/// Read detailed process info from /proc/{pid}
+fn read_proc_details(pid: &str, proc_info: &crate::types::ProcessInfo) -> crate::types::DetailedProcessInfo {
+    let proc_dir = format!("/proc/{}", pid);
+
+    let command = std::fs::read_to_string(format!("{}/cmdline", proc_dir))
+        .unwrap_or_default()
+        .replace('\0', " ")
+        .trim().to_string();
+
+    let cwd = std::fs::read_link(format!("{}/cwd", proc_dir))
+        .ok().map(|p| p.to_string_lossy().to_string());
+
+    let environ: Vec<String> = std::fs::read_to_string(format!("{}/environ", proc_dir))
+        .unwrap_or_default()
+        .split('\0')
+        .filter(|s| !s.is_empty())
+        .map(|s| s.to_string())
+        .collect();
+
+    let status_content = std::fs::read_to_string(format!("{}/status", proc_dir)).unwrap_or_default();
+    let mut threads: u32 = 0;
+    let mut ppid: Option<String> = None;
+    let mut vm_rss: u64 = proc_info.mem;
+    let mut vm_size: u64 = 0;
+    let mut status_str = "Running".to_string();
+
+    for line in status_content.lines() {
+        if line.starts_with("Threads:") {
+            threads = line.split_whitespace().nth(1).and_then(|v| v.parse().ok()).unwrap_or(0);
+        } else if line.starts_with("PPid:") {
+            ppid = line.split_whitespace().nth(1).map(|s| s.to_string());
+        } else if line.starts_with("VmRSS:") {
+            vm_rss = line.split_whitespace().nth(1).and_then(|v| v.parse::<u64>().ok()).unwrap_or(0) * 1024;
+        } else if line.starts_with("VmSize:") {
+            vm_size = line.split_whitespace().nth(1).and_then(|v| v.parse::<u64>().ok()).unwrap_or(0) * 1024;
+        } else if line.starts_with("State:") {
+            let st = line.split_whitespace().nth(1).unwrap_or("?");
+            status_str = match st {
+                "S" => "Sleeping".to_string(),
+                "R" => "Running".to_string(),
+                "Z" => "Zombie".to_string(),
+                "T" => "Stopped".to_string(),
+                "D" => "Disk Sleep".to_string(),
+                "I" => "Idle".to_string(),
+                _ => st.to_string(),
+            };
+        }
+    }
+
+    let mut start_time = "N/A".to_string();
+    if let Ok(stat) = std::fs::read_to_string(format!("{}/stat", proc_dir)) {
+        let parts: Vec<&str> = stat.split_whitespace().collect();
+        if parts.len() > 21 {
+            if let Ok(ticks) = parts[21].parse::<u64>() {
+                let uptime_secs = std::fs::read_to_string("/proc/uptime")
+                    .unwrap_or_default()
+                    .split_whitespace().next()
+                    .and_then(|s| s.parse::<f64>().ok())
+                    .unwrap_or(0.0);
+                let start_secs = ticks / 100;
+                let elapsed = (uptime_secs as u64).saturating_sub(start_secs);
+                let now = std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .unwrap_or_default().as_secs();
+                let started_at = now.saturating_sub(elapsed);
+                start_time = chrono::DateTime::from_timestamp(started_at as i64, 0)
+                    .map(|dt| dt.with_timezone(&chrono::Local).format("%Y-%m-%d %H:%M:%S").to_string())
+                    .unwrap_or_else(|| "N/A".to_string());
+            }
+        }
+    }
+
+    crate::types::DetailedProcessInfo {
+        pid: proc_info.pid.clone(),
+        name: proc_info.name.clone(),
+        user: proc_info.user.clone(),
+        status: status_str,
+        cpu_usage: proc_info.cpu,
+        memory_rss: vm_rss,
+        memory_vms: vm_size,
+        command: if command.is_empty() { proc_info.name.clone() } else { command },
+        start_time,
+        parent: ppid,
+        environ,
+        threads,
+        file_descriptors: std::fs::read_dir(format!("{}/fd", proc_dir)).ok().map(|d| d.count() as u32),
+        cwd,
+    }
+}
 
 pub fn build_ui(app: &Application, state: Arc<Mutex<AppState>>, config: AppConfig) {
     // Load custom CSS
@@ -37,7 +130,22 @@ pub fn build_ui(app: &Application, state: Arc<Mutex<AppState>>, config: AppConfi
     let header = gtk::HeaderBar::new();
     header.set_show_close_button(true);
     header.set_title(Some("PULS"));
-    header.set_subtitle(Some("System Monitor"));
+    header.set_subtitle(Some("System Monitor & Admin Tool"));
+
+    // Pause/Resume toggle button
+    let paused = Rc::new(Cell::new(false));
+    let pause_btn = gtk::ToggleButton::with_label("⏸ Pause");
+    pause_btn.style_context().add_class("suggested-action");
+    let paused_clone = paused.clone();
+    pause_btn.connect_toggled(move |btn| {
+        paused_clone.set(btn.is_active());
+        if btn.is_active() {
+            btn.set_label("▶ Resume");
+        } else {
+            btn.set_label("⏸ Pause");
+        }
+    });
+    header.pack_end(&pause_btn);
     window.set_titlebar(Some(&header));
 
     let vbox = GtkBox::new(Orientation::Vertical, 0);
@@ -97,6 +205,9 @@ pub fn build_ui(app: &Application, state: Arc<Mutex<AppState>>, config: AppConfi
     let sensors_tab = sensors::build_tab(state.clone());
     stack.add_titled(&sensors_tab, "sensors", "+:Sensors");
 
+    let process_detail_tab = process_detail::build_tab(state.clone());
+    stack.add_titled(&process_detail_tab, "process_detail", "P:Details");
+
     switcher.set_stack(Some(&stack));
 
     // Global Keyboard Shortcuts
@@ -131,6 +242,7 @@ pub fn build_ui(app: &Application, state: Arc<Mutex<AppState>>, config: AppConfi
             keys::minus => Some("config"),
             keys::equal => Some("containers"),
             keys::plus => Some("sensors"),
+            keys::p | keys::P => Some("process_detail"),
             _ => None,
         };
 
@@ -144,6 +256,56 @@ pub fn build_ui(app: &Application, state: Arc<Mutex<AppState>>, config: AppConfi
 
     vbox.pack_start(&stack, true, true, 0);
 
+    // Wire up process selection from Dashboard TreeView
+    {
+        let state_sel = state.clone();
+        let stack_sel = stack.clone();
+        if let Some(tree) = dashboard::find_widget_by_name(
+            &dashboard_tab.clone().downcast::<gtk::Container>().unwrap(),
+            "dashboard_proc_tree"
+        ).and_then(|w| w.downcast::<gtk::TreeView>().ok()) {
+            tree.connect_row_activated(move |tv, _path, _col| {
+                let sel = tv.selection();
+                if let Some((model, iter)) = sel.selected() {
+                    if let Ok(pid_str) = model.value(&iter, 0).get::<String>() {
+                        let mut s = state_sel.lock();
+                        if let Some(proc) = s.dynamic_data.processes.iter().find(|p| p.pid == pid_str) {
+                            let details = read_proc_details(&pid_str, proc);
+                            s.dynamic_data.detailed_process = Some(details);
+                        }
+                        drop(s);
+                        stack_sel.set_visible_child_name("process_detail");
+                    }
+                }
+            });
+        }
+    }
+
+    // Wire up process selection from Processes tab TreeView
+    {
+        let state_sel = state.clone();
+        let stack_sel = stack.clone();
+        if let Some(tree) = dashboard::find_widget_by_name(
+            &processes_tab.clone().downcast::<gtk::Container>().unwrap(),
+            "process_tree"
+        ).and_then(|w| w.downcast::<gtk::TreeView>().ok()) {
+            tree.connect_row_activated(move |tv, _path, _col| {
+                let sel = tv.selection();
+                if let Some((model, iter)) = sel.selected() {
+                    if let Ok(pid_str) = model.value(&iter, 0).get::<String>() {
+                        let mut s = state_sel.lock();
+                        if let Some(proc) = s.dynamic_data.processes.iter().find(|p| p.pid == pid_str) {
+                            let details = read_proc_details(&pid_str, proc);
+                            s.dynamic_data.detailed_process = Some(details);
+                        }
+                        drop(s);
+                        stack_sel.set_visible_child_name("process_detail");
+                    }
+                }
+            });
+        }
+    }
+
     window.add(&vbox);
     window.show_all();
 
@@ -153,7 +315,12 @@ pub fn build_ui(app: &Application, state: Arc<Mutex<AppState>>, config: AppConfi
     let global_stats_widget_clone = global_stats_widget.clone();
 
     let refresh_ms = config.ui_refresh_rate_ms() as u32;
+    let paused_ref = paused.clone();
     glib::timeout_add_local(Duration::from_millis(refresh_ms as u64), move || {
+        // Skip updates when paused
+        if paused_ref.get() {
+            return ControlFlow::Continue;
+        }
         // Here we trigger updates to internal UI tabs by reading the `state`
         dashboard::update_tab(&dashboard_tab, &state);
         processes::update_tab(&processes_tab, &state);
@@ -168,6 +335,7 @@ pub fn build_ui(app: &Application, state: Arc<Mutex<AppState>>, config: AppConfi
         config::update_tab(&config_tab, &state);
         containers::update_tab(&containers_tab, &state);
         sensors::update_tab(&sensors_tab, &state);
+        process_detail::update_tab(&process_detail_tab, &state);
         global_stats::update_global_stats(&global_stats_widget_clone, &state);
 
         ControlFlow::Continue

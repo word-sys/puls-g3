@@ -65,7 +65,7 @@ impl From<Cli> for AppConfig {
 
 impl AppConfig {
     pub fn ui_refresh_rate_ms(&self) -> u64 {
-        33  //30FPS i think
+        self.refresh_rate_ms.max(500) // Match data refresh, minimum 500ms
     }
     
     pub fn data_refresh_rate_ms(&self) -> u64 {

@@ -95,6 +95,8 @@ async fn data_collection_loop(
     let mut interval = tokio::time::interval(config.get_collection_sleep_duration());
     let mut prev_global_usage = types::GlobalUsage::default();
     
+    let mut cycle_count: u32 = 0;
+
     loop {
         interval.tick().await;
         
@@ -137,6 +139,21 @@ async fn data_collection_loop(
         {
             let mut state = app_state.lock();
             state.dynamic_data = new_data;
+        }
+
+        // Refresh logs, services, and config periodically (every 10 cycles)
+        cycle_count += 1;
+        if cycle_count % 10 == 0 {
+            let sys_mgr = system_service::SystemManager::new();
+            let logs = sys_mgr.get_logs(100, None, None);
+            let services = sys_mgr.get_services();
+            let config_items = sys_mgr.get_grub_config();
+            {
+                let mut state = app_state.lock();
+                state.logs = logs;
+                state.services = services;
+                state.config_items = config_items;
+            }
         }
         
         let collection_duration = collection_start.elapsed();
