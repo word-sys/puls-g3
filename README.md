@@ -54,44 +54,30 @@ PULS-G3 provides control over `systemd` units with `pkexec` privilege escalation
 
 ## Installation
 
+### Dependencies
+```bash
+# Ubuntu/Debian
+sudo apt install libgtk-3-dev pkg-config build-essential
+
+# Arch Linux
+sudo pacman -S gtk3 pkg-config base-devel
+
+# Fedora
+sudo dnf install gtk3-devel pkg-config
+```
+
 ### Build from Source
-
-1.  **Dependencies**:
-    ```bash
-    # Ubuntu/Debian
-    sudo apt install libgtk-3-dev pkg-config build-essential
-
-    # Arch Linux
-    sudo pacman -S gtk3 pkg-config base-devel
-
-    # Fedora
-    sudo dnf install gtk3-devel pkg-config
-    ```
-
-2.  **Build**:
-    ```bash
-    cargo build --release
-    ```
+```bash
+cargo build --release
+sudo cp target/release/puls-g3 /usr/local/bin/
+```
 
 ### Build .deb Package
-
-1.  **Install cargo-deb**:
-    ```bash
-    cargo install cargo-deb
-    ```
-
-2.  **Build**:
-    ```bash
-    cargo deb
-    ```
-    The `.deb` file will be created in `target/debian/`.
-
-### Release Binary
 ```bash
-bash build-release.sh
-sudo cp target/x86_64-unknown-linux-gnu/release/puls-g3 /usr/local/bin/
+cargo install cargo-deb
+cargo deb
+sudo dpkg -i target/debian/puls-g3_*.deb
 ```
-The release binary requires `libgtk-3-0` on the target system.
 
 ## Usage
 

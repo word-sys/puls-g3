@@ -16,11 +16,11 @@ pub fn build_tab(_state: Arc<Mutex<AppState>>) -> Widget {
 
     let action_box = Box::new(Orientation::Horizontal, 5);
 
-    let start_btn = Button::with_label("▶ Start");
-    let stop_btn = Button::with_label("■ Stop");
-    let restart_btn = Button::with_label("⟳ Restart");
-    let enable_btn = Button::with_label("✓ Enable");
-    let disable_btn = Button::with_label("✗ Disable");
+    let start_btn = Button::with_label("Start");
+    let stop_btn = Button::with_label("Stop");
+    let restart_btn = Button::with_label("Restart");
+    let enable_btn = Button::with_label("Enable");
+    let disable_btn = Button::with_label("Disable");
 
     start_btn.style_context().add_class("suggested-action");
     stop_btn.style_context().add_class("destructive-action");
@@ -79,8 +79,8 @@ pub fn build_tab(_state: Arc<Mutex<AppState>>) -> Widget {
         if let Some(name) = get_selected_service(&tree_ref) {
             let mgr = crate::system_service::SystemManager::new();
             match mgr.start_service(&name) {
-                Ok(()) => status_ref.set_text(&format!("✓ Started {}", name)),
-                Err(e) => status_ref.set_text(&format!("✗ Failed to start {}: {}", name, e)),
+                Ok(()) => status_ref.set_text(&format!("[OK] Started {}", name)),
+                Err(e) => status_ref.set_text(&format!("[FAIL] Failed to start {}: {}", name, e)),
             }
         } else {
             status_ref.set_text("No service selected");
@@ -93,8 +93,8 @@ pub fn build_tab(_state: Arc<Mutex<AppState>>) -> Widget {
         if let Some(name) = get_selected_service(&tree_ref) {
             let mgr = crate::system_service::SystemManager::new();
             match mgr.stop_service(&name) {
-                Ok(()) => status_ref.set_text(&format!("✓ Stopped {}", name)),
-                Err(e) => status_ref.set_text(&format!("✗ Failed to stop {}: {}", name, e)),
+                Ok(()) => status_ref.set_text(&format!("[OK] Stopped {}", name)),
+                Err(e) => status_ref.set_text(&format!("[FAIL] Failed to stop {}: {}", name, e)),
             }
         } else {
             status_ref.set_text("No service selected");
@@ -107,8 +107,8 @@ pub fn build_tab(_state: Arc<Mutex<AppState>>) -> Widget {
         if let Some(name) = get_selected_service(&tree_ref) {
             let mgr = crate::system_service::SystemManager::new();
             match mgr.restart_service(&name) {
-                Ok(()) => status_ref.set_text(&format!("✓ Restarted {}", name)),
-                Err(e) => status_ref.set_text(&format!("✗ Failed to restart {}: {}", name, e)),
+                Ok(()) => status_ref.set_text(&format!("[OK] Restarted {}", name)),
+                Err(e) => status_ref.set_text(&format!("[FAIL] Failed to restart {}: {}", name, e)),
             }
         } else {
             status_ref.set_text("No service selected");
@@ -121,8 +121,8 @@ pub fn build_tab(_state: Arc<Mutex<AppState>>) -> Widget {
         if let Some(name) = get_selected_service(&tree_ref) {
             let mgr = crate::system_service::SystemManager::new();
             match mgr.enable_service(&name) {
-                Ok(()) => status_ref.set_text(&format!("✓ Enabled {}", name)),
-                Err(e) => status_ref.set_text(&format!("✗ Failed to enable {}: {}", name, e)),
+                Ok(()) => status_ref.set_text(&format!("[OK] Enabled {}", name)),
+                Err(e) => status_ref.set_text(&format!("[FAIL] Failed to enable {}: {}", name, e)),
             }
         } else {
             status_ref.set_text("No service selected");
@@ -135,8 +135,8 @@ pub fn build_tab(_state: Arc<Mutex<AppState>>) -> Widget {
         if let Some(name) = get_selected_service(&tree_ref) {
             let mgr = crate::system_service::SystemManager::new();
             match mgr.disable_service(&name) {
-                Ok(()) => status_ref.set_text(&format!("✓ Disabled {}", name)),
-                Err(e) => status_ref.set_text(&format!("✗ Failed to disable {}: {}", name, e)),
+                Ok(()) => status_ref.set_text(&format!("[OK] Disabled {}", name)),
+                Err(e) => status_ref.set_text(&format!("[FAIL] Failed to disable {}: {}", name, e)),
             }
         } else {
             status_ref.set_text("No service selected");

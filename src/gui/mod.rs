@@ -131,20 +131,33 @@ pub fn build_ui(app: &Application, state: Arc<Mutex<AppState>>, config: AppConfi
     header.set_subtitle(Some("System Monitor & Admin Tool"));
 
     let paused = Rc::new(Cell::new(false));
-    let pause_btn = gtk::ToggleButton::with_label("⏸ Pause");
+    let pause_btn = gtk::ToggleButton::with_label("Pause");
     pause_btn.style_context().add_class("suggested-action");
     let paused_clone = paused.clone();
     pause_btn.connect_toggled(move |btn| {
         paused_clone.set(btn.is_active());
         if btn.is_active() {
-            btn.set_label("▶ Resume");
+            btn.set_label("Resume");
         } else {
-            btn.set_label("⏸ Pause");
+            btn.set_label("Pause");
         }
     });
     header.pack_end(&pause_btn);
+
+    let dark_flag = style::dark_mode_flag();
+    let theme_btn = gtk::Button::with_label(if dark_flag.get() { "Light" } else { "Dark" });
+    theme_btn.connect_clicked(move |btn| {
+        let is_dark = dark_flag.get();
+        let new_dark = !is_dark;
+        dark_flag.set(new_dark);
+        style::apply_theme(new_dark);
+        btn.set_label(if new_dark { "Light" } else { "Dark" });
+    });
+    header.pack_end(&theme_btn);
+
     window.set_titlebar(Some(&header));
     let vbox = GtkBox::new(Orientation::Vertical, 0);
+    vbox.style_context().add_class("puls-content");
     let switcher = gtk::StackSwitcher::new();
     switcher.set_halign(gtk::Align::Center);
     vbox.pack_start(&switcher, false, false, 5);
