@@ -45,13 +45,6 @@ PULS-G3 provides control over `systemd` units with `pkexec` privilege escalation
 *   **Parameter Editing**: Modify kernel parameters in `/etc/default/grub`.
 *   **Safety Backup**: PULS-G3 automatically creates a timestamped backup (e.g., `/etc/default/grub.bak.<timestamp>`) before applying any changes to boot configurations.
 
-### 6. Keyboard Shortcuts
-| Key | Action |
-| :--- | :--- |
-| `1`-`9`, `0`, `-`, `=`, `+` | Switch tabs |
-| `Tab` | Cycle to next tab |
-| `P` | Process Details tab |
-
 ## Installation
 
 ### Dependencies
