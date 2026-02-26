@@ -20,17 +20,6 @@ All notable changes to this project will be documented in this file
 - **CPU Cores**: Updated grid to 8 columns for better visibility
 - **UI Polish**: Reduced navigation button size for a more compact look
 
-## [v0.7.2] - 2026-02-25
-
-### Added
-- **Themes**: Added dark and light themes
-
-### Fixed
-- **CSS**: Fixed CSS, GTK3 interface design doesnt touched by theme anymore
-
-### Removed
-- **Refrence**: Removed original-puls reference code
-
 ## [v0.7.1] - 2026-02-23
 
 ### Release
