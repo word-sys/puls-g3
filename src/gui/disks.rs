@@ -24,19 +24,21 @@ pub fn build_tab(_state: Arc<Mutex<AppState>>) -> Widget {
         glib::Type::STRING, // Used
         glib::Type::STRING, // Free
         glib::Type::STRING, // Use%
+        glib::Type::STRING, // Read Rate
+        glib::Type::STRING, // Write Rate
         glib::Type::STRING, // Temp
         glib::Type::STRING, // Health
         glib::Type::STRING, // Cycles
         glib::Type::STRING, // Type
     ]);
-
     let tree = TreeView::with_model(&store);
     tree.set_widget_name("disks_tree");
 
     for (title, id) in &[
         ("Mount", 0), ("Device", 1), ("FS", 2), ("Total", 3),
-        ("Used", 4), ("Free", 5), ("Use%", 6), ("Temp", 7),
-        ("Health", 8), ("Cycles", 9), ("Type", 10),
+        ("Used", 4), ("Free", 5), ("Use%", 6), 
+        ("Read", 7), ("Write", 8),
+        ("Temp", 9), ("Health", 10), ("Cycles", 11), ("Type", 12),
     ] {
         let col = TreeViewColumn::new();
         col.set_title(title);
@@ -93,10 +95,16 @@ pub fn update_tab(tab: &Widget, state: &Arc<Mutex<AppState>>) {
             (4, &format_size(disk.used)),
             (5, &format_size(disk.free)),
             (6, &use_pct),
-            (7, &temp_str),
-            (8, &health_str),
-            (9, &cycles_str),
-            (10, &disk.is_ssd.map(|ssd| if ssd { "SSD".to_string() } else { "HDD".to_string() }).unwrap_or_else(|| "-".to_string())),
+            (7, &crate::utils::format_rate(disk.read_rate)),
+            (8, &crate::utils::format_rate(disk.write_rate)),
+            (9, &temp_str),
+            (10, &health_str),
+            (11, &cycles_str),
+            (12, &if disk.is_nvme { 
+                "NVMe".to_string() 
+            } else {
+                disk.is_ssd.map(|ssd| if ssd { "SSD".to_string() } else { "HDD".to_string() }).unwrap_or_else(|| "-".to_string())
+            }),
         ]);
     }
 }

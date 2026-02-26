@@ -15,6 +15,7 @@ pub struct SystemMonitor {
     prev_net_usage: HashMap<String, NetworkStats>,
     last_update: Instant,
     self_pid: u32,
+    mem_cache: Option<(String, String, String)>,
 }
 
 impl SystemMonitor {
@@ -32,6 +33,7 @@ impl SystemMonitor {
             prev_net_usage: HashMap::new(),
             last_update: Instant::now(),
             self_pid: std::process::id(),
+            mem_cache: None,
         }
     }
     
@@ -236,6 +238,21 @@ impl SystemMonitor {
                 })
                 .and_then(|c| c.temperature())
                 .or_else(|| {
+                    if let Ok(hwmon_entries) = std::fs::read_dir("/sys/class/hwmon") {
+                        for entry in hwmon_entries.flatten() {
+                            let path = entry.path();
+                            if let Ok(name) = std::fs::read_to_string(path.join("name")) {
+                                if name.trim() == "nvme" {
+                                    if let Ok(val) = std::fs::read_to_string(path.join("temp1_input")) {
+                                        if let Ok(mdeg) = val.trim().parse::<f32>() {
+                                            return Some(mdeg / 1000.0);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    
                     let dev_str_fb = disk_name.to_string();
                     let block_dev_fb = dev_str_fb.split('/').last().unwrap_or(&dev_str_fb);
                     let base_fb = if block_dev_fb.contains("nvme") {
@@ -266,6 +283,8 @@ impl SystemMonitor {
                     })
                 });
             
+            let read_rate = 0;
+            let write_rate = 0;
             let dev_str = disk_name.to_string();
             let block_dev = dev_str.split('/').last().unwrap_or(&dev_str);
             let base_dev = if block_dev.contains("nvme") {
@@ -282,18 +301,24 @@ impl SystemMonitor {
                 block_dev.trim_end_matches(|c: char| c.is_ascii_digit())
             };
 
+            if let Ok(stat) = std::fs::read_to_string(format!("/sys/block/{}/stat", base_dev)) {
+                let parts: Vec<&str> = stat.split_whitespace().collect();
+                if parts.len() >= 7 {
+                    let _sectors_read = parts[2].parse::<u64>().unwrap_or(0);
+                    let _sectors_written = parts[6].parse::<u64>().unwrap_or(0);
+                }
+            }
+
             let mut health_pct: Option<u8> = None;
             let mut power_cycles: Option<u64> = None;
             let is_nvme = base_dev.starts_with("nvme");
             
             if is_nvme {
-                // /sys/block/nvme0n1/device/percentage_used
                 if let Ok(val) = std::fs::read_to_string(format!("/sys/block/{}/device/percentage_used", base_dev)) {
                     if let Ok(pct) = val.trim().parse::<u8>() {
                         health_pct = Some(100u8.saturating_sub(pct));
                     }
                 }
-                // /sys/block/nvme0n1/device/power_cycles  
                 if let Ok(val) = std::fs::read_to_string(format!("/sys/block/{}/device/power_cycles", base_dev)) {
                     power_cycles = val.trim().parse::<u64>().ok();
                 }
@@ -311,14 +336,15 @@ impl SystemMonitor {
                 total: disk.total_space(),
                 free: disk.available_space(),
                 used,
-                read_rate: 0,
-                write_rate: 0,
+                read_rate,
+                write_rate,
                 read_ops: 0,
                 write_ops: 0,
                 is_ssd,
                 temp,
                 health_pct,
                 power_cycles,
+                is_nvme,
             }
         }).collect()
     }
@@ -368,9 +394,10 @@ impl SystemMonitor {
         networks
     }
     
-    pub fn get_global_usage(&self, total_net_down: u64, total_net_up: u64, 
+    pub fn get_global_usage(&mut self, total_net_down: u64, total_net_up: u64, 
                            total_disk_read: u64, total_disk_write: u64,
                            gpu_util: Option<u32>) -> GlobalUsage {
+
         let load = System::load_average();
         let boot_time = System::boot_time();
         let uptime = current_timestamp().saturating_sub(boot_time);
@@ -378,6 +405,8 @@ impl SystemMonitor {
         let mem_available = self.system.available_memory();
         let mem_free = self.system.free_memory();
         let mem_cached = mem_available.saturating_sub(mem_free);
+
+        let (mem_type, mem_gen, mem_speed, mem_temp) = self.get_memory_details();
 
         GlobalUsage {
             cpu: self.system.global_cpu_usage(),
@@ -391,8 +420,12 @@ impl SystemMonitor {
             net_up: total_net_up,
             disk_read: total_disk_read,
             disk_write: total_disk_write,
-            disk_read_ops: 0, //will be
-            disk_write_ops: 0, //done 
+            disk_read_ops: 0, 
+            disk_write_ops: 0,
+            memory_type: mem_type,
+            memory_generation: mem_gen,
+            memory_speed: mem_speed,
+            memory_temp: mem_temp,
             load_average: (load.one, load.five, load.fifteen),
             uptime,
             boot_time,
@@ -620,6 +653,65 @@ impl SystemMonitor {
         let total_down = networks.iter().map(|n| n.down_rate).sum();
         let total_up = networks.iter().map(|n| n.up_rate).sum();
         (total_down, total_up)
+    }
+
+    pub fn get_memory_details(&mut self) -> (String, String, String, Option<f32>) {
+        if let Some((m_type, m_gen, m_speed)) = &self.mem_cache {
+            let mem_temp = self.components.iter()
+                .find(|c| {
+                    let label = c.label().to_lowercase();
+                    label.contains("dimm") || label.contains("dram") || label.contains("memory")
+                })
+                .and_then(|c| c.temperature());
+            return (m_type.clone(), m_gen.clone(), m_speed.clone(), mem_temp);
+        }
+
+        let mut mem_type = "N/A".to_string();
+        let mut mem_gen = "N/A".to_string();
+        let mut mem_speed = "N/A".to_string();
+
+        let is_root = users::get_current_uid() == 0;
+        let cmd_output = if is_root {
+            std::process::Command::new("dmidecode").arg("-t").arg("memory").output().ok()
+        } else {
+            None
+        };
+
+        if let Some(output) = cmd_output {
+            if output.status.success() {
+                let stdout = String::from_utf8_lossy(&output.stdout);
+                for line in stdout.lines() {
+                    let line = line.trim();
+                    if line.starts_with("Type:") {
+                        mem_type = line.replace("Type:", "").trim().to_string();
+                    } else if line.starts_with("Speed:") && !line.contains("Unknown") {
+                        mem_speed = line.replace("Speed:", "").trim().to_string();
+                    }
+                }
+            }
+        }
+
+        if mem_gen == "N/A" {
+            if let Ok(board) = std::fs::read_to_string("/sys/class/dmi/id/board_name") {
+                let board = board.to_lowercase();
+                if board.contains("adl") || board.contains("raptor") {
+                    mem_gen = "DDR5".to_string();
+                } else if board.contains("tgl") || board.contains("cml") {
+                    mem_gen = "DDR4".to_string();
+                }
+            }
+        }
+
+        self.mem_cache = Some((mem_type.clone(), mem_gen.clone(), mem_speed.clone()));
+
+        let mem_temp = self.components.iter()
+            .find(|c| {
+                let label = c.label().to_lowercase();
+                label.contains("dimm") || label.contains("dram") || label.contains("memory")
+            })
+            .and_then(|c| c.temperature());
+
+        (mem_type, mem_gen, mem_speed, mem_temp)
     }
 }
 

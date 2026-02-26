@@ -13,11 +13,8 @@ pub fn build_tab(_state: Arc<Mutex<AppState>>) -> Widget {
     let status_frame = Frame::new(Some(" System Overview "));
     let status_lbl = Label::new(Some("Loading…"));
     status_lbl.set_widget_name("dashboard_status_lbl");
-    status_lbl.set_halign(gtk::Align::Start);
-    status_lbl.set_margin_start(6);
-    status_lbl.set_margin_end(6);
-    status_lbl.set_margin_top(4);
-    status_lbl.set_margin_bottom(4);
+    status_lbl.set_line_wrap(true);
+    status_lbl.set_xalign(0.0);
     status_lbl.style_context().add_class("text-green");
     status_frame.add(&status_lbl);
     container.pack_start(&status_frame, false, false, 0);

@@ -71,10 +71,11 @@ pub fn update_tab(tab: &Widget, state: &Arc<Mutex<AppState>>) {
             .unwrap_or_else(|| "N/A".to_string());
             
         lbl.set_text(&format!(
-            "Model: {}\nCores: {} Logical | Usage: {:.1}%\nTemperature: {}\nLoad Average: {:.2} {:.2} {:.2}",
+            "Model: {}\nCores: {} Logical | Usage: {:.1}%\nEfficiency: {}\nTemperature: {}\nLoad Average: {:.2} {:.2} {:.2}",
             cpu_model,
             cores.len(),
             usage.cpu,
+            crate::utils::get_cpu_efficiency(usage.cpu, usage.load_average.0, cores.len()),
             temp_str,
             usage.load_average.0, usage.load_average.1, usage.load_average.2
         ));
@@ -85,7 +86,7 @@ pub fn update_tab(tab: &Widget, state: &Arc<Mutex<AppState>>) {
             grid.remove(child);
         });
 
-        let columns = 4;
+        let columns = 8;
         for (i, core) in cores.iter().enumerate() {
             let row = i as i32 / columns;
             let col = i as i32 % columns;

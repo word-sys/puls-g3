@@ -57,7 +57,7 @@ impl GpuMonitor {
     
     fn get_nvidia_gpus(&self) -> Result<Vec<GpuInfo>, String> {
         let output = Command::new("nvidia-smi")
-            .arg("--query-gpu=name,utilization.gpu,memory.used,memory.total,temperature.gpu,power.draw,clocks.gr,clocks.mem,fan.speed,driver_version")
+            .arg("--query-gpu=name,utilization.gpu,memory.used,memory.total,temperature.gpu,power.draw,clocks.gr,clocks.mem,fan.speed,driver_version,pcie.link.gen.current,pcie.link.width.current")
             .arg("--format=csv,noheader,nounits")
             .output()
             .map_err(|e| e.to_string())?;
@@ -86,6 +86,8 @@ impl GpuMonitor {
             let memory_clock = parts[7].parse::<u32>().unwrap_or(0);
             let fan_speed = parts[8].parse::<u32>().ok();
             let driver_version = parts.get(9).unwrap_or(&"Unknown").to_string();
+            let pci_link_gen = parts.get(10).and_then(|s| s.parse::<u32>().ok());
+            let pci_link_width = parts.get(11).and_then(|s| s.parse::<u32>().ok());
             
             gpus.push(GpuInfo {
                 name,
@@ -99,8 +101,8 @@ impl GpuMonitor {
                 graphics_clock,
                 memory_clock,
                 fan_speed,
-                pci_link_gen: None,
-                pci_link_width: None,
+                pci_link_gen,
+                pci_link_width,
                 driver_version,
                 utilization_history: Vec::new(),
                 memory_history: Vec::new(),
@@ -188,6 +190,11 @@ impl GpuMonitor {
              memory_clock = self.find_hwmon_clock(device_path, "freq2_input").unwrap_or(0);
         }
         
+        let pci_link_gen = fs::read_to_string(device_path.join("current_link_gen"))
+            .ok().and_then(|s| s.trim().parse::<u32>().ok());
+        let pci_link_width = fs::read_to_string(device_path.join("current_link_width"))
+            .ok().and_then(|s| s.trim().parse::<u32>().ok());
+
         if graphics_clock == 0 {
              graphics_clock = self.find_hwmon_clock(device_path, "freq0_input").unwrap_or(0);
         }
@@ -203,9 +210,9 @@ impl GpuMonitor {
             power_usage,
             graphics_clock,
             memory_clock,
-            fan_speed: None, 
-            pci_link_gen: None,
-            pci_link_width: None,
+            fan_speed: self.find_hwmon_fan(device_path), 
+            pci_link_gen,
+            pci_link_width,
             driver_version: "amdgpu".to_string(),
             utilization_history: Vec::new(),
             memory_history: Vec::new(),
@@ -406,6 +413,38 @@ impl GpuMonitor {
         while self.gpu_memory_history.len() > max_history {
             self.gpu_memory_history.pop_front();
         }
+    }
+
+    fn find_hwmon_utilization(&self, device_path: &Path) -> Option<u32> {
+        let hwmon_dir = device_path.join("hwmon");
+        if let Ok(entries) = fs::read_dir(hwmon_dir) {
+            for entry in entries.flatten() {
+                 let path = entry.path();
+                 let util_path = path.join("device/gpu_busy_percent");
+                 if let Ok(s) = fs::read_to_string(util_path) {
+                     return s.trim().parse::<u32>().ok();
+                 }
+            }
+        }
+        None
+    }
+
+    fn find_hwmon_fan(&self, device_path: &Path) -> Option<u32> {
+        let hwmon_dir = device_path.join("hwmon");
+        if let Ok(entries) = fs::read_dir(hwmon_dir) {
+            for entry in entries.flatten() {
+                 let path = entry.path();
+                 for i in 1..=3 {
+                     let fan_path = path.join(format!("fan{}_input", i));
+                     if let Ok(s) = fs::read_to_string(fan_path) {
+                         if let Ok(rpm) = s.trim().parse::<u32>() {
+                             return Some(rpm); 
+                         }
+                     }
+                 }
+            }
+        }
+        None
     }
     
     pub fn get_gpu_history_flat(&self) -> Vec<u64> {

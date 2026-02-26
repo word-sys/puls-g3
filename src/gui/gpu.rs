@@ -68,7 +68,7 @@ pub fn update_tab(tab: &Widget, state: &Arc<Mutex<AppState>>) {
                     format_frequency(gpu.graphics_clock as u64),
                     format_frequency(gpu.memory_clock as u64),
                     gpu.memory_temperature.map(|t| format!("{}°C", t)).unwrap_or_else(|| "N/A".to_string()),
-                    gpu.fan_speed.map(|f| format!("{}%", f)).unwrap_or_else(|| "N/A".to_string()),
+                    gpu.fan_speed.map(|f| format!("{} RPM", f)).unwrap_or_else(|| "N/A".to_string()),
                     if let (Some(gen), Some(width)) = (gpu.pci_link_gen, gpu.pci_link_width) { format!("Gen {} x{}", gen, width) } else { "N/A".to_string() }
                 );
 

@@ -87,8 +87,8 @@ fn dark_theme() -> String {
             background-color: #111111;
             color: #999999;
             border: 1px solid #2a2a2a;
-            padding: 4px 10px;
-            font-size: 12px;
+            padding: 2px 6px;
+            font-size: 11px;
             font-weight: normal;
         }
 
@@ -229,8 +229,8 @@ fn light_theme() -> String {
             background-color: #e8e8e8;
             color: #555555;
             border: 1px solid #cccccc;
-            padding: 4px 10px;
-            font-size: 12px;
+            padding: 2px 6px;
+            font-size: 11px;
             font-weight: normal;
         }
 

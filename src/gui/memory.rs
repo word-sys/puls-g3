@@ -42,7 +42,7 @@ pub fn build_tab(_state: Arc<Mutex<AppState>>) -> Widget {
     let details_frame = Frame::new(Some(" Details "));
     let details_box = Box::new(Orientation::Vertical, 5);
     details_box.set_border_width(8);
-    let details_lbl = Label::new(Some("Total Memory:\nUsed Memory:\nCached / Buffers:\nFree / Available:\nTemperature:"));
+    let details_lbl = Label::new(Some("Total Memory:\nUsed Memory:\nCached / Buffers:\nFree / Available:\nType:\nGeneration:\nSpeed:\nTemperature:"));
     details_lbl.set_widget_name("details_lbl");
     details_lbl.set_halign(gtk::Align::Start);
     details_box.pack_start(&details_lbl, false, false, 0);
@@ -94,14 +94,15 @@ pub fn update_tab(tab: &Widget, state: &Arc<Mutex<AppState>>) {
             .map(|sensor| format!("{:.1}°C", sensor.temp))
             .unwrap_or_else(|| "N/A".to_string());
 
-        let total_mem = format_size(usage.mem_used + (usage.mem_total.saturating_sub(usage.mem_used)));
+        let total_mem = format_size(usage.mem_total);
         let used_mem = format_size(usage.mem_used);
         let cached_mem = format_size(usage.mem_cached);
         let free_mem = format_size(usage.mem_total.saturating_sub(usage.mem_used));
 
         lbl.set_text(&format!(
-            "Total Memory: {}\nUsed Memory: {}\nCached / Buffers: {}\nFree / Available: {}\nTemperature: {}",
-            total_mem, used_mem, cached_mem, free_mem, mem_temp_str
+            "Total Memory: {}\nUsed Memory: {}\nCached / Buffers: {}\nFree / Available: {}\nType: {}\nGeneration: {}\nSpeed: {}\nTemperature: {}",
+            total_mem, used_mem, cached_mem, free_mem, 
+            usage.memory_type, usage.memory_generation, usage.memory_speed, mem_temp_str
         ));
     }
 }

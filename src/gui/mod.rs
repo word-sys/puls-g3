@@ -127,8 +127,13 @@ pub fn build_ui(app: &Application, state: Arc<Mutex<AppState>>, config: AppConfi
         
     let header = gtk::HeaderBar::new();
     header.set_show_close_button(true);
-    header.set_title(Some("PULS"));
+    header.set_title(Some("PULS-G3"));
     header.set_subtitle(Some("System Monitor & Admin Tool"));
+    
+    let version_lbl = gtk::Label::new(Some(&format!("v{}", env!("CARGO_PKG_VERSION"))));
+    version_lbl.style_context().add_class("text-cyan");
+    version_lbl.set_margin_start(6);
+    header.pack_start(&version_lbl);
 
     let paused = Rc::new(Cell::new(false));
     let pause_btn = gtk::ToggleButton::with_label("Pause");
@@ -160,7 +165,11 @@ pub fn build_ui(app: &Application, state: Arc<Mutex<AppState>>, config: AppConfi
     vbox.style_context().add_class("puls-content");
     let switcher = gtk::StackSwitcher::new();
     switcher.set_halign(gtk::Align::Center);
-    vbox.pack_start(&switcher, false, false, 5);
+    let switcher_scroll = gtk::ScrolledWindow::new(gtk::Adjustment::NONE, gtk::Adjustment::NONE);
+    switcher_scroll.set_policy(gtk::PolicyType::Automatic, gtk::PolicyType::Never);
+    switcher_scroll.set_min_content_height(45);
+    switcher_scroll.add(&switcher);
+    vbox.pack_start(&switcher_scroll, false, false, 2);
     let global_stats_widget = global_stats::build_global_stats();
     vbox.pack_start(&global_stats_widget, false, false, 5);
     let stack = gtk::Stack::new();

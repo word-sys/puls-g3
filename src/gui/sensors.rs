@@ -65,12 +65,12 @@ pub fn update_tab(tab: &Widget, state: &Arc<Mutex<AppState>>) {
     
     for sensor in &s.dynamic_data.sensors {
         let value_str = match sensor.sensor_type.as_str() {
-            "temp" => format!("{:.1}°C", sensor.temp),
-            "fan" => format!("{:.0} RPM", sensor.temp),
-            "in" => format!("{:.3} V", sensor.temp),
-            "power" => format!("{:.2} W", sensor.temp),
-            "curr" => format!("{:.2} A", sensor.temp),
-            _ => format!("{:.2}", sensor.temp),
+            "temp" => format!("{:.1}°C", sensor.value),
+            "fan" => format!("{:.0} RPM", sensor.value),
+            "in" => format!("{:.3} V", sensor.value),
+            "power" => format!("{:.2} W", sensor.value),
+            "curr" => format!("{:.2} A", sensor.value),
+            _ => format!("{:.2}", sensor.value),
         };
         
         let type_display = match sensor.sensor_type.as_str() {
