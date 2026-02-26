@@ -92,4 +92,4 @@ PULS-G3 operates in different modes depending on the privileges:
 ---
 
 *For release notes and updates, please visit the [GitHub Releases](https://github.com/word-sys/puls-g3/releases) page.*
-*Verified on Arch Linux and Ubuntu 22.04+. Compatible with any Linux distribution with GTK3 >= 3.22.*
+*Verified on Arch Linux and Ubuntu 22.04+.*
