@@ -57,13 +57,13 @@ PULS-G3 provides control over `systemd` units with `pkexec` privilege escalation
 ### Dependencies
 ```bash
 # Ubuntu/Debian
-sudo apt install libgtk-3-dev pkg-config build-essential
+libgtk-3-dev pkg-config build-essential
 
 # Arch Linux
-sudo pacman -S gtk3 pkg-config base-devel
+gtk3 pkg-config base-devel
 
 # Fedora
-sudo dnf install gtk3-devel pkg-config
+gtk3-devel pkg-config
 ```
 
 ### Build from Source
